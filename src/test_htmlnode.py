@@ -3,6 +3,11 @@ import unittest
 from htmlnode import HTMLNode, LeafNode, ParentNode
 
 class TestHTMLNode(unittest.TestCase):
+    def test_to_html(self):
+        node = HTMLNode()
+        with self.assertRaises(NotImplementedError):
+            node.to_html()
+
     def test_props_to_html(self):
         node1 = HTMLNode()
         node2 = HTMLNode(tag="a", value="abcd", children=[node1], props={"href": "https://www.google.com", "target" : "_blank"})
@@ -31,14 +36,18 @@ class TestLeafNode(unittest.TestCase):
         leaf1 = LeafNode(tag="p", value="This is a paragraph of text.")
         leaf2 = LeafNode(tag="a", value="Click me!", props={"href": "https://www.google.com"})
         leaf3 = LeafNode(value="just raw text")
+        leaf4 = LeafNode()
 
         self.assertEqual("<p>This is a paragraph of text.</p>", leaf1.to_html())
         self.assertEqual("<a href=\"https://www.google.com\">Click me!</a>", leaf2.to_html())
         self.assertEqual("just raw text", leaf3.to_html())
+        with self.assertRaises(ValueError):
+            leaf4.to_html()
 
 
 class TestParentNode(unittest.TestCase):
     def test_to_html(self):
+        # normal case
         parent1 = ParentNode(
                 "p",
                 [
@@ -58,7 +67,7 @@ class TestParentNode(unittest.TestCase):
                     LeafNode(None, "Normal text nested"),
                 ],
         )
-
+        # nesteed case
         parent2 = ParentNode(
                 "p",
                 [
@@ -67,6 +76,21 @@ class TestParentNode(unittest.TestCase):
                     sub_parent,
                     LeafNode(None, "Normal text"),
                 ],
+        )
+        # invalid case (no tag)
+        parent3 = ParentNode(
+                tag=None,
+                children=[
+                    LeafNode("b", "Bold text"),
+                    LeafNode(None, "Normal text"),
+                    sub_parent,
+                    LeafNode(None, "Normal text"),
+                ],
+        )
+        # invalid case (no children)
+        parent4 = ParentNode(
+                "p",
+                children=None
         )
 
         expected_string1 = "<p><b>Bold text</b>Normal text<i>italic text</i>Normal text</p>"
@@ -77,6 +101,9 @@ class TestParentNode(unittest.TestCase):
 
         self.assertEqual(expected_string1, parent1.to_html())
         self.assertEqual(expected_string2, parent2.to_html())
+        with self.assertRaises(ValueError):
+            parent3.to_html()
+            parent4.to_html()
 
 
 if __name__ == "__main__":
