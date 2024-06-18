@@ -56,23 +56,27 @@ def is_valid_markdown(text : str, delimiter : str) -> bool:
     return delimiter_count % 2 == 0
 
 
-def delimiter_to_text_type(delimiter : str) -> TextNodeType:
+def check_delimiter_validity(delimiter : str) -> bool:
     if delimiter == "`":
-        return TextNodeType.code
+        return True
     
     elif delimiter == "*":
-        return TextNodeType.italic
+        return True
     
-    elif delimiter == TextNodeType.bold:
-        return TextNodeType.bold
+    elif delimiter == "**":
+        return True
     
     else:
-        raise Exception("Invalid delimiter")
+        return False
 
 
 def split_nodes_delimiter(old_nodes : list[Self], delimiter : str, text_type : Type[TextNodeType]) -> list[TextNode]:
+    
+    if not check_delimiter_validity(delimiter):
+        raise Exception("Invalid delimiter")
+    
     def split_single_node(node : Self, delimiter : str, text_type : Type[TextNodeType]):
-        ret_list1 = []
+        ret_list = []
         text = node.text
         if not is_valid_markdown(text, delimiter):
             raise Exception(f"Invalid markdown delimiter syntax: matching {delimiter} character not found")
@@ -83,13 +87,13 @@ def split_nodes_delimiter(old_nodes : list[Self], delimiter : str, text_type : T
                 # e.g. str_a = "*a*bcd*ef*" -> str_a.split("*") == ['', 'a', 'bcd', 'ef', ''] 
                 # str_b = "a*b*cd*ef*" -> str_b.split("*") == ['a', 'b', 'cd', 'ef', '']
                 if i % 2 != 0: 
-                    new_node = TextNode(text_list[i], delimiter_to_text_type(delimiter), node.url)
-                    ret_list1.append(new_node)
+                    new_node = TextNode(text_list[i], text_type, node.url)
+                    ret_list.append(new_node)
                 else:
                     new_node = TextNode(text_list[i], TextNodeType.text, node.url)
-                    ret_list1.append(new_node)
+                    ret_list.append(new_node)
         
-        return ret_list1
+        return ret_list
 
     ret_list = []
     for node in old_nodes:
