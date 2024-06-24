@@ -1,16 +1,9 @@
-from textnode import TextNode
+import textnode_utils
+
 
 def main():
-    node1 = TextNode("This is a text node", "bold", "https://www.boot.dev")
-    node2 = TextNode("This is a different node", "bold", "https://www.boot.dev")
-    node3 = TextNode("This is a text node", "bold", "https://www.boot.dev")
-
-    print(node1)
-    print(node2)
-    print(node3)
-
-    print(node1 == node2)
-    print(node1 == node3)
+    text = "This is text with a [link](https://www.example.com) and [another](https://www.example.com/another)"
+    print(textnode_utils.extract_markdown_links(text))
 
 if __name__ == "__main__":
     main()

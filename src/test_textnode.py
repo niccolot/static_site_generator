@@ -1,6 +1,7 @@
 import unittest
 
-from textnode import TextNode, split_nodes_delimiter, TextNodeType
+from textnode import TextNode, TextNodeType
+import textnode_utils
 
 
 class TestTextNode(unittest.TestCase):
@@ -21,10 +22,10 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(node6, node7) # same text, same text type, same url
 
 
-class TextSplitNodesDelimiter(unittest.TestCase):
-    def test(self):
+class TestTextNodeUtils(unittest.TestCase):
+    def test_split_nodes_delimiter(self):
         node1 = TextNode("This is text with a `code block` word", TextNodeType.text)
-        new_nodes1 = split_nodes_delimiter([node1], "`", TextNodeType.code)
+        new_nodes1 = textnode_utils.split_nodes_delimiter([node1], "`", TextNodeType.code)
 
         expected_nodes1 = [
                             TextNode("This is text with a ", TextNodeType.text),
@@ -33,7 +34,7 @@ class TextSplitNodesDelimiter(unittest.TestCase):
                         ]
         
         node2 = TextNode("This is a different text with more `code` inside", TextNodeType.text)
-        new_nodes2 = split_nodes_delimiter([node1, node2], "`", TextNodeType.code)
+        new_nodes2 = textnode_utils.split_nodes_delimiter([node1, node2], "`", TextNodeType.code)
 
         expected_nodes2 = [
                             TextNode("This is text with a ", TextNodeType.text),
@@ -45,7 +46,7 @@ class TextSplitNodesDelimiter(unittest.TestCase):
                         ]
         
         node3 = TextNode("This is another different text but with **bold** text inside", TextNodeType.text)
-        new_nodes3 = split_nodes_delimiter([node1, node2, node3], "`", TextNodeType.code)
+        new_nodes3 = textnode_utils.split_nodes_delimiter([node1, node2, node3], "`", TextNodeType.code)
 
         expected_nodes3 = [
                             TextNode("This is text with a ", TextNodeType.text),
@@ -58,7 +59,7 @@ class TextSplitNodesDelimiter(unittest.TestCase):
                         ]
         
         node4 = TextNode("This is text with a **bold** word", TextNodeType.text)
-        new_nodes4 = split_nodes_delimiter([node4], "**", TextNodeType.bold)
+        new_nodes4 = textnode_utils.split_nodes_delimiter([node4], "**", TextNodeType.bold)
 
         expected_nodes4 = [
                             TextNode("This is text with a ", TextNodeType.text),
@@ -67,7 +68,7 @@ class TextSplitNodesDelimiter(unittest.TestCase):
                         ]
         
         node5 = TextNode("This is text with a *italic* word", TextNodeType.text)
-        new_nodes5 = split_nodes_delimiter([node5], "*", TextNodeType.italic)
+        new_nodes5 = textnode_utils.split_nodes_delimiter([node5], "*", TextNodeType.italic)
 
         expected_nodes5 = [
                             TextNode("This is text with a ", TextNodeType.text),
@@ -84,12 +85,25 @@ class TextSplitNodesDelimiter(unittest.TestCase):
         self.assertListEqual(new_nodes5, expected_nodes5)
 
         with self.assertRaises(Exception) as e:
-            _ = split_nodes_delimiter([node5], "!", TextNodeType.italic)
+            _ = textnode_utils.split_nodes_delimiter([node5], "!", TextNodeType.italic)
             self.assertEqual(str(e.exception), "Invalid delimiter")
 
         with self.assertRaises(Exception) as e:   
-            _ = split_nodes_delimiter([single_delimiter_node], "*", TextNodeType.italic)
+            _ = textnode_utils.split_nodes_delimiter([single_delimiter_node], "*", TextNodeType.italic)
             self.assertEqual(str(e.exception), "Invalid markdown delimiter syntax: matching * character not found")
+
+    def test_extract_markdown_image_link(self):
+        text_with_images =  "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and ![another](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/dfsdkjfd.png)"
+        text_with_links = "This is text with a [link](https://www.example.com) and [another](https://www.example.com/another)"
+        text_with_both =  text_with_images + text_with_links
+
+        images_list = [("image", "https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png"), ("another", "https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/dfsdkjfd.png")]
+        links_list = [("link", "https://www.example.com"), ("another", "https://www.example.com/another")]
+
+        self.assertListEqual(images_list, textnode_utils.extract_markdown_images(text_with_images))
+        self.assertListEqual(links_list, textnode_utils.extract_markdown_links(text_with_links))
+        self.assertListEqual(images_list, textnode_utils.extract_markdown_images(text_with_both))
+        self.assertListEqual(links_list, textnode_utils.extract_markdown_links(text_with_both))
 
 
 if __name__ == "__main__":
