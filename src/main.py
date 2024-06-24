@@ -1,9 +1,10 @@
 import textnode_utils
-
+from textnode import TextNode, TextNodeType
 
 def main():
-    text = "This is text with a [link](https://www.example.com) and [another](https://www.example.com/another)"
-    print(textnode_utils.extract_markdown_links(text))
+    node = TextNode("Text with 2 consecutive *italic* *delimited parts*", TextNodeType.text)
+    new_nodes = textnode_utils.split_nodes_delimiter([node], "*", TextNodeType.italic)
+    print(new_nodes)
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 from typing import Self, Type
 import re
+import warnings 
 
 from htmlnode import LeafNode
 from textnode import TextNodeType, TextNode
@@ -59,7 +60,7 @@ def split_nodes_delimiter(old_nodes : list[Self], delimiter : str, text_type : T
     if not check_delimiter_validity(delimiter):
         raise Exception("Invalid delimiter")
     
-    def split_single_node(node : Self, delimiter : str, text_type : Type[TextNodeType]):
+    def split_single_node(node : Type[TextNode], delimiter : str, text_type : Type[TextNodeType]) -> list[TextNode]:
         ret_list = []
         text = node.text
         if not is_valid_markdown(text, delimiter):
@@ -70,6 +71,7 @@ def split_nodes_delimiter(old_nodes : list[Self], delimiter : str, text_type : T
                 # in a valid string the text enclosed by the delimiters (code, italic or bold) will be located on odd indexes 
                 # e.g. str_a = "*a*bcd*ef*" -> str_a.split("*") == ['', 'a', 'bcd', 'ef', ''] 
                 # str_b = "a*b*cd*ef*" -> str_b.split("*") == ['a', 'b', 'cd', 'ef', '']
+                # str_c = "*a* *ef*" -> str_c.split("*") == ['', 'a', ' ', 'ef', '']
                 if i % 2 != 0: 
                     new_node = TextNode(text_list[i], text_type, node.url)
                     ret_list.append(new_node)
@@ -77,7 +79,11 @@ def split_nodes_delimiter(old_nodes : list[Self], delimiter : str, text_type : T
                     new_node = TextNode(text_list[i], TextNodeType.text, node.url)
                     ret_list.append(new_node)
         
-        return ret_list
+        # filter out empty text resulting from the splitting of a string with 
+        # a delimited part at the end, like str_b or str_c in the comment above
+        filtered_ret_list = [node for node in ret_list if node.text != ""]
+        
+        return filtered_ret_list
 
     ret_list = []
     for node in old_nodes:
@@ -87,6 +93,20 @@ def split_nodes_delimiter(old_nodes : list[Self], delimiter : str, text_type : T
             ret_list.extend(split_single_node(node, delimiter, text_type))
     
     return ret_list
+
+
+def split_nodes_image(old_nodes : list[Self]) -> list[TextNode]:
+    def split_single_node_image(node : Type[TextNode]) -> list[TextNode]:
+        ret_list = []
+        text = node.text
+        image_tuples = extract_markdown_images(text)
+        for img_tup in image_tuples:
+            # if there is no content 
+            if img_tup[1] == "":
+                warnings.warn("Markdown syntax for image detected but no file given")
+                continue
+            else:
+                text_list = text.split(f"![{img_tup[0]}]({img_tup[1]}", 1)
         
 
 def extract_markdown_images(text : str) -> list[tuple]:
