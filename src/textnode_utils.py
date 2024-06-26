@@ -99,14 +99,53 @@ def split_nodes_image(old_nodes : list[Self]) -> list[TextNode]:
     def split_single_node_image(node : Type[TextNode]) -> list[TextNode]:
         ret_list = []
         text = node.text
-        image_tuples = extract_markdown_images(text)
-        for img_tup in image_tuples:
-            # if there is no content 
-            if img_tup[1] == "":
-                warnings.warn("Markdown syntax for image detected but no file given")
-                continue
+        text_list, image_parts_idxs = split_markdown_images_with_indices(text)
+
+        for i in range(len(text_list)):
+            if i in image_parts_idxs:
+                alt_text_and_url = text_list[i].split()
+                new_node = TextNode(alt_text_and_url[0], TextNodeType.image, alt_text_and_url[1])
+                ret_list.append(new_node)
             else:
-                text_list = text.split(f"![{img_tup[0]}]({img_tup[1]}", 1)
+                new_node = TextNode(text_list[i], TextNodeType.text)
+                ret_list.append(new_node)
+        
+        return ret_list
+    
+    ret_list = []
+    for node in old_nodes:
+        ret_list.extend(split_single_node_image(node))
+    
+    return ret_list
+
+
+def split_markdown_images_with_indices(text : str) -> tuple[list[str], list[int]]:
+    # Regex pattern to match the image markdown
+    pattern = r'(\!\[.*?\]\(.*?\))'
+    
+    # Split the text by the image markdown pattern
+    parts = re.split(pattern, text)
+    parts = [part for part in parts if part]
+    
+    result = []
+    image_indices = []
+    
+    for part in parts:
+        if re.match(pattern, part):
+            # Extract the alt text and image link
+            alt_text, image_link = re.findall(r'\!\[(.*?)\]\((.*?)\)', part)[0]
+
+            # if no image content given, warn the user and do not append anything
+            if not image_link:
+                warnings.warn("Markdown syntax detected but no content given")
+                continue
+            
+            result.append(f"{alt_text} {image_link}")
+            image_indices.append(len(result) - 1)  # Store the index of the image element
+        else:
+            result.append(part)
+    
+    return result, image_indices
         
 
 def extract_markdown_images(text : str) -> list[tuple]:

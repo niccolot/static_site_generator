@@ -5,7 +5,9 @@ import textnode_utils
 
 
 class TestTextNode(unittest.TestCase):
+
     def test_eq(self):
+
         node = TextNode("This is a text node", "bold")
         node2 = TextNode("This is a text node", "bold")
         node3 = TextNode("This is a node with different text but same text type", "bold")
@@ -23,7 +25,9 @@ class TestTextNode(unittest.TestCase):
 
 
 class TestTextNodeUtils(unittest.TestCase):
+
     def test_split_nodes_delimiter(self):
+
         node1 = TextNode("This is text with a `code block` word", TextNodeType.text)
         new_nodes1 = textnode_utils.split_nodes_delimiter([node1], "`", TextNodeType.code)
 
@@ -126,6 +130,7 @@ class TestTextNodeUtils(unittest.TestCase):
 
 
     def test_extract_markdown_image_link(self):
+
         text_with_images =  "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and ![another](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/dfsdkjfd.png)"
         text_with_links = "This is text with a [link](https://www.example.com) and [another](https://www.example.com/another)"
         text_with_nothing = "This is a text without images or links"
@@ -148,6 +153,24 @@ class TestTextNodeUtils(unittest.TestCase):
         self.assertListEqual(no_image_list, textnode_utils.extract_markdown_images(image_with_no_contents))
         self.assertListEqual(no_link_list, textnode_utils.extract_markdown_links(link_with_no_contents))
 
+    
+    def test_split_nodes_image(self):
+
+        node1 = TextNode(
+                "This is text with an ![image1](image1.png) and another ![image2](image2.png)",
+                TextNodeType.text,
+            )
+        
+        new_nodes1 = textnode_utils.split_nodes_image([node1])
+
+        expected_nodes1 = [
+                            TextNode("This is text with an ", TextNodeType.text),
+                            TextNode("image1", TextNodeType.image, "image1.png"),
+                            TextNode(" and another ", TextNodeType.text),
+                            TextNode("image2", TextNodeType.image, "image2.png"),
+                        ]
+        
+        self.assertListEqual(new_nodes1, expected_nodes1)
 
 if __name__ == "__main__":
     unittest.main()
