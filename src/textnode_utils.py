@@ -137,7 +137,7 @@ def split_markdown_images_with_indices(text : str) -> tuple[list[str], list[int]
 
             # if no image content given, warn the user and do not append anything
             if not image_link:
-                warnings.warn("Markdown syntax detected but no content given")
+                warnings.warn("Markdown syntax detected but no content given", UserWarning)
                 continue
             
             result.append(f"{alt_text} {image_link}")

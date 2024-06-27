@@ -172,5 +172,64 @@ class TestTextNodeUtils(unittest.TestCase):
         
         self.assertListEqual(new_nodes1, expected_nodes1)
 
+
+        node2 = TextNode(
+                "This is text with an ![image1](image1.png) and another  with no content ![image2]()",
+                TextNodeType.text,
+            )
+
+        with self.assertWarns(UserWarning) as warn:
+            _ = textnode_utils.split_nodes_image([node2])
+        
+        self.assertEqual(str(warn.warning), "Markdown syntax detected but no content given")
+
+
+        node3 = TextNode(
+                "![image1](image1.png) and another ![image2](image2.png)",
+                TextNodeType.text,
+            )
+        
+        new_nodes3 = textnode_utils.split_nodes_image([node3])
+
+        expected_nodes3 = [
+                            TextNode("image1", TextNodeType.image, "image1.png"),
+                            TextNode(" and another ", TextNodeType.text),
+                            TextNode("image2", TextNodeType.image, "image2.png"),
+                        ]
+        
+        self.assertListEqual(new_nodes3, expected_nodes3)
+
+
+        node4 = TextNode(
+                "![image1](image1.png) ![image2](image2.png)",
+                TextNodeType.text,
+            )
+        
+        new_nodes4 = textnode_utils.split_nodes_image([node4])
+
+        expected_nodes4 = [
+                            TextNode("image1", TextNodeType.image, "image1.png"),
+                            TextNode(" ", TextNodeType.text),
+                            TextNode("image2", TextNodeType.image, "image2.png"),
+                        ]
+        
+        self.assertListEqual(new_nodes4, expected_nodes4)
+
+
+        node5 = TextNode(
+                "![image1](image1.png)![image2](image2.png)",
+                TextNodeType.text,
+            )
+        
+        new_nodes5 = textnode_utils.split_nodes_image([node5])
+
+        expected_nodes5 = [
+                            TextNode("image1", TextNodeType.image, "image1.png"),
+                            TextNode("image2", TextNodeType.image, "image2.png"),
+                        ]
+        
+        self.assertListEqual(new_nodes5, expected_nodes5)
+            
+
 if __name__ == "__main__":
     unittest.main()

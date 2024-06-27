@@ -4,7 +4,7 @@ import re
 
 def main():
     node = TextNode(
-                "This is text with an ![image1]() and another ![image2](image2.png)",
+                "This is text with an ![image1](image1.png) and a link [link1](www.pippo.it)",
                 TextNodeType.text,
             )
         
