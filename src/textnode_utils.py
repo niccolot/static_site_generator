@@ -1,4 +1,4 @@
-from typing import Self, Type
+from typing import Type
 import re
 import warnings 
 
@@ -55,7 +55,21 @@ def check_delimiter_validity(delimiter : str) -> bool:
         return False
 
 
-def split_nodes_delimiter(old_nodes : list[Self], delimiter : str, text_type : Type[TextNodeType]) -> list[TextNode]:
+def split_nodes_delimiter(old_nodes : list[TextNode], delimiter : str, text_type : Type[TextNodeType]) -> list[TextNode]:
+    """
+    given list of TextNode with just text it separates the text parts from the bold italic or code parts e.g.
+
+    node = TextNode("This is text with a `code block` word", TextNodeType.text)
+    new_nodes = split_nodes_delimiter([node1], "`", TextNodeType.code)
+
+    new_nodes == [
+                        TextNode("This is text with a ", TextNodeType.text),
+                        TextNode("code block", TextNodeType.code),
+                        TextNode(" word", TextNodeType.text),
+                    ]
+
+    same thing with bold or italic
+    """
     
     if not check_delimiter_validity(delimiter):
         raise Exception("Invalid delimiter")
@@ -95,11 +109,30 @@ def split_nodes_delimiter(old_nodes : list[Self], delimiter : str, text_type : T
     return ret_list
 
 
-def split_nodes_image(old_nodes : list[Self]) -> list[TextNode]:
+def split_nodes_image(old_nodes : list[TextNode]) -> list[TextNode]:
+    """
+    given a list of TextNode with just text it separates the images part e.g.
+
+    node = TextNode(
+            "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and another ![second image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/3elNhQu.png)",
+            text_type_text,
+        )
+
+    new_nodes = split_nodes_image([node])
+
+    new_nodes == [
+                    TextNode("This is text with an ", text_type_text),
+                    TextNode("image", text_type_image, "https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png"),
+                    TextNode(" and another ", text_type_text),
+                    TextNode(
+                        "second image", text_type_image, "https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/3elNhQu.png"
+                    ),
+                ]
+    """
     def split_single_node_image(node : Type[TextNode]) -> list[TextNode]:
         ret_list = []
         text = node.text
-        text_list, image_parts_idxs = split_markdown_images_with_indices(text)
+        text_list, image_parts_idxs = split_markdown_imgs_links_with_indices(text, img=True)
 
         for i in range(len(text_list)):
             if i in image_parts_idxs:
@@ -119,33 +152,74 @@ def split_nodes_image(old_nodes : list[Self]) -> list[TextNode]:
     return ret_list
 
 
-def split_markdown_images_with_indices(text : str) -> tuple[list[str], list[int]]:
-    # Regex pattern to match the image markdown
-    pattern = r'(\!\[.*?\]\(.*?\))'
+def split_nodes_link(old_nodes : list[TextNode]) -> list[TextNode]:
+    """
+    same usage as split_nodes_image but with links
+    """
+    def split_single_node_link(node : Type[TextNode]) -> list[TextNode]:
+        ret_list = []
+        text = node.text
+        text_list, image_parts_idxs = split_markdown_imgs_links_with_indices(text, img=False)
+
+        for i in range(len(text_list)):
+            if i in image_parts_idxs:
+                alt_text_and_url = text_list[i].split()
+                new_node = TextNode(alt_text_and_url[0], TextNodeType.link, alt_text_and_url[1])
+                ret_list.append(new_node)
+            else:
+                new_node = TextNode(text_list[i], TextNodeType.text)
+                ret_list.append(new_node)
+        
+        return ret_list
     
-    # Split the text by the image markdown pattern
-    parts = re.split(pattern, text)
+    ret_list = []
+    for node in old_nodes:
+        ret_list.extend(split_single_node_link(node))
+    
+    return ret_list
+
+
+def split_markdown_imgs_links_with_indices(text : str, img : bool) -> tuple[list[str], list[int]]:
+
+    if img:
+        # Regex pattern to match the image markdown
+        # pattern1 is to obtain a splitting e.g.
+        # "This is text with an ![image1](image1.png) and another ![image2](image2.png)" -> ['This is text with an ', '![image1](image1.png)', ' and another ', '![image2](image2.png)']
+        #
+        # pattern2 is used to strip alt_text and url of parenthesis and separate them e.g.
+        # ![image1](image1.png) -> (image1, image1.png) in order to be extracted separately later
+        pattern1 = r'(\!\[.*?\]\(.*?\))' 
+        pattern2 = r'\!\[(.*?)\]\((.*?)\)'
+    else:
+        # Regex pattern to match the link markdown
+        # same concepts as with images
+        pattern1 = r'((?<!\!)\[.*?\]\(.*?\))'
+        pattern2 = r'(?<!\!)\[(.*?)\]\((.*?)\)'
+    
+    # Split the text by the image or link markdown pattern
+    parts = re.split(pattern1, text)
+    # filter out empty text
     parts = [part for part in parts if part]
     
     result = []
-    image_indices = []
+    indices = []
     
     for part in parts:
-        if re.match(pattern, part):
-            # Extract the alt text and image link
-            alt_text, image_link = re.findall(r'\!\[(.*?)\]\((.*?)\)', part)[0]
+        if re.match(pattern1, part):
+            # Extract the alt text and image link url
+            alt_text, url = re.findall(pattern2, part)[0] # extract first (and only) match, otherwise it would be a list and not the tuple inside the list
 
-            # if no image content given, warn the user and do not append anything
-            if not image_link:
+            # if no image or link content given, warn the user and do not append anything
+            if not url:
                 warnings.warn("Markdown syntax detected but no content given", UserWarning)
                 continue
             
-            result.append(f"{alt_text} {image_link}")
-            image_indices.append(len(result) - 1)  # Store the index of the image element
+            result.append(f"{alt_text} {url}")
+            indices.append(len(result) - 1)  # Store the index of the image or link element
         else:
             result.append(part)
     
-    return result, image_indices
+    return result, indices
         
 
 def extract_markdown_images(text : str) -> list[tuple]:
@@ -155,3 +229,28 @@ def extract_markdown_images(text : str) -> list[tuple]:
 def extract_markdown_links(text : str) -> list[tuple]:
     matches = re.findall(r"(?<!\!)\[(.*?)\]\((.*?)\)", text)
     return matches
+
+
+def text_to_textnode(text : str) -> list[TextNode]:
+    
+    
+    node = TextNode(text, TextNodeType.text)
+    print(node)
+    print()
+    """
+    x = split_nodes_delimiter([node], "*", TextNodeType.italic)
+    print(x)
+    print()
+    x = split_nodes_delimiter(x, "**", TextNodeType.bold)
+    print(x)
+    print()
+    x = split_nodes_delimiter(x, "`", TextNodeType.code)
+    print(x)
+    print()
+    x = split_nodes_image(x)
+    print(x)
+    print()
+    x = split_nodes_link(x)
+    """
+    x = split_nodes_image([node])
+    return x

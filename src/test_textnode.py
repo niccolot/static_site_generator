@@ -229,7 +229,71 @@ class TestTextNodeUtils(unittest.TestCase):
                         ]
         
         self.assertListEqual(new_nodes5, expected_nodes5)
+
+
+        node6 = TextNode(
+                "This is text with a [link1](https://pippo1) and another [link2](https://pippo2)",
+                TextNodeType.text,
+                )
+        
+        new_nodes6 = textnode_utils.split_nodes_image([node6])
+
+        expected_nodes6 = [
+                            TextNode("This is text with a [link1](https://pippo1) and another [link2](https://pippo2)", TextNodeType.text),
+                        ]
+        
+        self.assertListEqual(new_nodes6, expected_nodes6)
+
+    
+    def test_split_nodes_link(self):
+
+            node1 = TextNode(
+                "This is text with a [link1](https://pippo1) and another [link2](https://pippo2)",
+                TextNodeType.text,
+                )
+        
+            new_nodes1 = textnode_utils.split_nodes_link([node1])
+
+            expected_nodes1 = [
+                                TextNode("This is text with a ", TextNodeType.text),
+                                TextNode("link1", TextNodeType.link, "https://pippo1"),
+                                TextNode(" and another ", TextNodeType.text),
+                                TextNode("link2", TextNodeType.link, "https://pippo2"),
+                            ]
             
+            self.assertListEqual(new_nodes1, expected_nodes1)
+
+
+            node2 = TextNode(
+                "This is text with an ![image1](image1.png) and another ![image2](image2.png)",
+                TextNodeType.text,
+            )
+        
+            new_nodes2 = textnode_utils.split_nodes_link([node2])
+
+            expected_nodes2 = [
+                                TextNode("This is text with an ![image1](image1.png) and another ![image2](image2.png)", TextNodeType.text),
+                            ]
+            
+            self.assertListEqual(new_nodes2, expected_nodes2)
+
+
+    def test_text_to_textnode(self):
+        text = "This is **text** with an *italic* word and a `code block` and an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and a [link](https://boot.dev)"
+        nodes = textnode_utils.text_to_textnode(text)
+        expected_nodes = [
+                            TextNode("This is ", TextNodeType.text),
+                            TextNode("text", TextNodeType.bold),
+                            TextNode(" with an ", TextNodeType.text),
+                            TextNode("italic", TextNodeType.italic),
+                            TextNode(" word and a ", TextNodeType.text),
+                            TextNode("code block", TextNodeType.code),
+                            TextNode(" and an ", TextNodeType.text),
+                            TextNode("image", TextNodeType.image, "https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png"),
+                            TextNode(" and a ", TextNodeType.text),
+                            TextNode("link", TextNodeType.link, "https://boot.dev"),
+                        ]
+        self.assertListEqual(nodes, expected_nodes)
 
 if __name__ == "__main__":
     unittest.main()
