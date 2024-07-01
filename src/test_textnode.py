@@ -299,7 +299,7 @@ class TestTextNodeUtils(unittest.TestCase):
 
     def test_markdown_to_block(self):
 
-        with open("test_md.txt") as file:
+        with open("test_md1.txt") as file:
             markdown = file.read()
         
         list = textnode_utils.markdown_to_blocks(markdown)

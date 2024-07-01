@@ -56,7 +56,7 @@ class LeafNode(HTMLNode):
 class ParentNode(HTMLNode):
     def __init__(self, 
                 tag : str, 
-                children : list[Self], 
+                children : list[LeafNode], 
                 props : dict = None
         ) -> None:
 
