@@ -3,3 +3,4 @@ public/
 server.py
 src/main.py
 *.md
+test_md.txt

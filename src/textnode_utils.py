@@ -3,7 +3,7 @@ import re
 import warnings 
 
 from htmlnode import LeafNode
-from textnode import TextNodeType, TextNode
+from textnode import TextNodeType, TextNode, MDBlockType
 
 
 def text_node_to_html_node(text_node : Type[TextNode]) -> Type[LeafNode]:
@@ -53,6 +53,47 @@ def check_delimiter_validity(delimiter : str) -> bool:
     
     else:
         return False
+    
+
+def split_markdown_inline(text : str, delimiter : str) -> list[str]:
+    """
+    ensures that bold and italic text are splitted correctly
+
+    text1 = "aaa **bbb** ccc"
+    text2 = "aaa *bbb* ccc"
+
+    # Splitting with "**" delimiter
+    print(split_markdown(text1, "**"))  # Output: ['aaa ', 'bbb', ' ccc']
+
+    # Splitting with "*" delimiter
+    print(split_markdown(text2, "*"))  # Output: ['aaa ', 'bbb', ' ccc']
+
+    # Splitting with "*" on text with "**"
+    print(split_markdown(text1, "*"))  # Output: ['aaa **bbb** ccc']
+    """
+
+    # code text is easy to split 
+    if delimiter == "`":
+        return text.split(delimiter)
+    else:
+        # Escape the delimiter for regex
+        escaped_delimiter = re.escape(delimiter)
+        # Find all positions of the standalone delimiter
+        matches = list(re.finditer(r'(?<!\*)' + escaped_delimiter + r'(?!\*)', text))
+        
+        if not matches:
+            return [text]
+        
+        parts = []
+        last_end = 0
+        
+        for match in matches:
+            start, end = match.span()
+            parts.append(text[last_end:start])
+            last_end = end
+            
+        parts.append(text[last_end:])
+        return parts
 
 
 def split_nodes_delimiter(old_nodes : list[TextNode], delimiter : str, text_type : Type[TextNodeType]) -> list[TextNode]:
@@ -77,10 +118,13 @@ def split_nodes_delimiter(old_nodes : list[TextNode], delimiter : str, text_type
     def split_single_node(node : Type[TextNode], delimiter : str, text_type : Type[TextNodeType]) -> list[TextNode]:
         ret_list = []
         text = node.text
+        old_type = node.text_type
+
         if not is_valid_markdown(text, delimiter):
             raise Exception(f"Invalid markdown delimiter syntax: matching {delimiter} character not found")
         else: 
-            text_list = text.split(f"{delimiter}")
+            #text_list = text.split(f"{delimiter}")
+            text_list = split_markdown_inline(text, delimiter)
             for i in range(len(text_list)):
                 # in a valid string the text enclosed by the delimiters (code, italic or bold) will be located on odd indexes 
                 # e.g. str_a = "*a*bcd*ef*" -> str_a.split("*") == ['', 'a', 'bcd', 'ef', ''] 
@@ -90,7 +134,7 @@ def split_nodes_delimiter(old_nodes : list[TextNode], delimiter : str, text_type
                     new_node = TextNode(text_list[i], text_type, node.url)
                     ret_list.append(new_node)
                 else:
-                    new_node = TextNode(text_list[i], TextNodeType.text, node.url)
+                    new_node = TextNode(text_list[i], old_type, node.url)
                     ret_list.append(new_node)
         
         # filter out empty text resulting from the splitting of a string with 
@@ -132,6 +176,8 @@ def split_nodes_image(old_nodes : list[TextNode]) -> list[TextNode]:
     def split_single_node_image(node : Type[TextNode]) -> list[TextNode]:
         ret_list = []
         text = node.text
+        old_type = node.text_type
+        old_url = node.url
         text_list, image_parts_idxs = split_markdown_imgs_links_with_indices(text, img=True)
 
         for i in range(len(text_list)):
@@ -140,7 +186,7 @@ def split_nodes_image(old_nodes : list[TextNode]) -> list[TextNode]:
                 new_node = TextNode(alt_text_and_url[0], TextNodeType.image, alt_text_and_url[1])
                 ret_list.append(new_node)
             else:
-                new_node = TextNode(text_list[i], TextNodeType.text)
+                new_node = TextNode(text_list[i], old_type, old_url)
                 ret_list.append(new_node)
         
         return ret_list
@@ -159,6 +205,8 @@ def split_nodes_link(old_nodes : list[TextNode]) -> list[TextNode]:
     def split_single_node_link(node : Type[TextNode]) -> list[TextNode]:
         ret_list = []
         text = node.text
+        old_type = node.text_type
+        old_url = node.url
         text_list, image_parts_idxs = split_markdown_imgs_links_with_indices(text, img=False)
 
         for i in range(len(text_list)):
@@ -167,7 +215,7 @@ def split_nodes_link(old_nodes : list[TextNode]) -> list[TextNode]:
                 new_node = TextNode(alt_text_and_url[0], TextNodeType.link, alt_text_and_url[1])
                 ret_list.append(new_node)
             else:
-                new_node = TextNode(text_list[i], TextNodeType.text)
+                new_node = TextNode(text_list[i], old_type, old_url)
                 ret_list.append(new_node)
         
         return ret_list
@@ -233,24 +281,47 @@ def extract_markdown_links(text : str) -> list[tuple]:
 
 def text_to_textnode(text : str) -> list[TextNode]:
     
-    
     node = TextNode(text, TextNodeType.text)
-    print(node)
-    print()
-    """
     x = split_nodes_delimiter([node], "*", TextNodeType.italic)
-    print(x)
-    print()
     x = split_nodes_delimiter(x, "**", TextNodeType.bold)
-    print(x)
-    print()
     x = split_nodes_delimiter(x, "`", TextNodeType.code)
-    print(x)
-    print()
-    x = split_nodes_image(x)
-    print(x)
-    print()
     x = split_nodes_link(x)
-    """
-    x = split_nodes_image([node])
+    x = split_nodes_image(x)
+
     return x
+
+
+def markdown_to_blocks(markdown : str) -> list[str]:
+    # Use regex to split the markdown string by \n\n
+    blocks = re.split(r'\n\s*\n', markdown)
+    
+    # Strip leading and trailing whitespace from each block and filter out any empty blocks
+    processed_blocks = [block.strip() for block in blocks if block.strip()]
+    
+    return processed_blocks
+
+
+def block_to_block_type(block : str) -> MDBlockType:
+
+    if re.match(r'#{1,6} ', block):
+        return MDBlockType.heading
+    
+    if block.startswith('```') and block.endswith('```'):
+        return MDBlockType.code
+    
+    if all(line.startswith('> ') for line in block.split('\n')):
+        return MDBlockType.quote
+    
+    if all(line.startswith(('* ', '- ')) for line in block.split('\n')):
+        return MDBlockType.unordered_list
+    
+    ordered_list_pattern = r'^(\d+)\. '
+    lines = block.split('\n')
+    if all(re.match(ordered_list_pattern, line) for line in lines):
+        # Check if numbers increment by 1
+        numbers = [int(re.match(ordered_list_pattern, line).group(1)) for line in lines]
+        if numbers == list(range(1, len(lines) + 1)):
+            return MDBlockType.ordered_list
+    
+    
+    return MDBlockType.paragraph

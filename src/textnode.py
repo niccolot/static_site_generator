@@ -1,10 +1,9 @@
-from typing import Self, Type
+from typing import Self
 from enum import Enum
-import re
 
-from htmlnode import LeafNode
 
 TextNodeType = Enum('TextNodeType', ['text', 'bold', 'italic', 'code', 'link', 'image'])
+MDBlockType = Enum('MDBlockType', ['paragraph', 'heading', 'code', 'quote', 'unordered_list', 'ordered_list'])
 
 
 class TextNode:

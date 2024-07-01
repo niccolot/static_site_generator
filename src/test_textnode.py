@@ -1,6 +1,6 @@
 import unittest
 
-from textnode import TextNode, TextNodeType
+from textnode import TextNode, TextNodeType, MDBlockType
 import textnode_utils
 
 
@@ -277,8 +277,9 @@ class TestTextNodeUtils(unittest.TestCase):
             
             self.assertListEqual(new_nodes2, expected_nodes2)
 
-
+   
     def test_text_to_textnode(self):
+
         text = "This is **text** with an *italic* word and a `code block` and an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and a [link](https://boot.dev)"
         nodes = textnode_utils.text_to_textnode(text)
         expected_nodes = [
@@ -294,6 +295,64 @@ class TestTextNodeUtils(unittest.TestCase):
                             TextNode("link", TextNodeType.link, "https://boot.dev"),
                         ]
         self.assertListEqual(nodes, expected_nodes)
+
+
+    def test_markdown_to_block(self):
+
+        with open("test_md.txt") as file:
+            markdown = file.read()
+        
+        list = textnode_utils.markdown_to_blocks(markdown)
+        expected_list = [
+            "# Header 1", "This is a paragraph with some text.", 
+            "## Header 2", "This is another paragraph with leading spaces.",
+            "This paragraph has \nmultiple lines.","* List item 1\n* List item 2", 
+            "### Header 3", "Last block with some more text."
+                          ]
+
+        self.assertListEqual(list, expected_list)
+
+    
+    def test_block_to_block_type(self):
+
+        heading1 = "# a"
+        heading2 = "## a"
+        heading3 = "### a"
+        heading4 = "#### a"
+        heading5 = "##### a"
+        heading6 = "###### a"
+
+        code = "```a```"
+
+        quote = "> a"
+
+        unordered_list1 = "* a \n* b"
+        unordered_list2 = "- a \n- b"
+
+        ordered_list = "1. a \n2. b"
+        paragraph = "a"
+        wrong_ordered_list = "1. a \n3. b"
+
+        self.assertEqual(MDBlockType.heading, textnode_utils.block_to_block_type(heading1))
+        self.assertEqual(MDBlockType.heading, textnode_utils.block_to_block_type(heading2))
+        self.assertEqual(MDBlockType.heading, textnode_utils.block_to_block_type(heading3))
+        self.assertEqual(MDBlockType.heading, textnode_utils.block_to_block_type(heading4))
+        self.assertEqual(MDBlockType.heading, textnode_utils.block_to_block_type(heading5))
+        self.assertEqual(MDBlockType.heading, textnode_utils.block_to_block_type(heading6))
+
+        self.assertEqual(MDBlockType.code, textnode_utils.block_to_block_type(code))
+
+        self.assertEqual(MDBlockType.quote, textnode_utils.block_to_block_type(quote))
+
+        self.assertEqual(MDBlockType.unordered_list, textnode_utils.block_to_block_type(unordered_list1))
+
+        self.assertEqual(MDBlockType.unordered_list, textnode_utils.block_to_block_type(unordered_list2))
+
+        self.assertEqual(MDBlockType.ordered_list, textnode_utils.block_to_block_type(ordered_list))
+
+        self.assertEqual(MDBlockType.paragraph, textnode_utils.block_to_block_type(paragraph))
+        self.assertEqual(MDBlockType.paragraph, textnode_utils.block_to_block_type(wrong_ordered_list))
+    
 
 if __name__ == "__main__":
     unittest.main()
