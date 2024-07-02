@@ -105,15 +105,6 @@ def quote_block_to_html_node(block : str) -> Type[ParentNode]:
         leafs.append(text_node_to_html_node(node))
 
     return ParentNode(outer_tag, leafs)
-    """
-    if block_to_block_type(block) != MDBlockType.quote:
-        raise Exception("Block of type different than 'quote' given, change block type or use appropriate function")
-
-    value = block.lstrip('> ').strip()
-    tag = "blockquote"
-
-    return LeafNode(tag, value)
-    """
 
 
 def unordered_list_block_to_html_node(block : str) -> Type[ParentNode]:
