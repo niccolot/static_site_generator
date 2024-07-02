@@ -171,7 +171,7 @@ def ordered_list_block_to_html_node(block : str) -> Type[ParentNode]:
 
     
 def paragraph_block_to_html_node(block : str) -> Type[ParentNode]:
-    """
+    
     if block_to_block_type(block) != MDBlockType.paragraph:
         raise Exception("Block of type different than 'paragraph' given, change block type or use appropriate function")
     
@@ -179,17 +179,20 @@ def paragraph_block_to_html_node(block : str) -> Type[ParentNode]:
     
     leafs = []
     for node in text_nodes:
-        leafs.append(text_node_to_html_node(node))
+        if node.text != None:
+            leafs.append(text_node_to_html_node(node))
     
     return ParentNode("p", leafs)
-    """
+    
     
 
-    
+    """
     if block_to_block_type(block) != MDBlockType.paragraph:
         raise Exception("Block of type different than 'paragraph' given, change block type or use appropriate function")
     
     return LeafNode("p", block)
+    """
+    
     
 
 def get_md_to_html_converter(type : Type[MDBlockType]) -> Callable:

@@ -28,7 +28,7 @@ def text_node_to_html_node(text_node : Type[TextNode]) -> Type[LeafNode]:
             "src" : text_node.url,
             "alt" : text_node.text
         }
-        return LeafNode("img", None, props)
+        return LeafNode("img", text_node.text, props)
     
     raise Exception('Invalid text node type')
 
