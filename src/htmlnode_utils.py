@@ -46,6 +46,18 @@ def parse_markdown_ordered_list(md_list: str) -> list[str]:
     return cleaned_items
 
 
+def strip_quote_block(quote_block: str) -> str:
+    # Split the block into lines
+    lines = quote_block.split('\n')
+    
+    # Strip the "> " characters from each line
+    stripped_lines = [line[2:].strip() if line.startswith('> ') else line.strip() for line in lines]
+    
+    # Join the stripped lines back into a single string
+    cleaned_text = '\n'.join(stripped_lines).strip()
+    
+    return cleaned_text
+
 
 def heading_block_to_html_node(block : str) -> Type[ParentNode]:
 
@@ -83,7 +95,8 @@ def quote_block_to_html_node(block : str) -> Type[ParentNode]:
     if block_to_block_type(block) != MDBlockType.quote:
         raise Exception("Block of type different than 'quote' given, change block type or use appropriate function")
 
-    text = block.lstrip('> ').strip()
+    #text = block.lstrip('> ').strip()
+    text = strip_quote_block(block)
     outer_tag = "blockquote"
 
     text_nodes = text_to_textnode(text)
@@ -104,72 +117,55 @@ def quote_block_to_html_node(block : str) -> Type[ParentNode]:
 
 
 def unordered_list_block_to_html_node(block : str) -> Type[ParentNode]:
-    if block_to_block_type(block) != MDBlockType.unordered_list:
-        raise Exception("Block of type different than 'unordered list' given, change block type or use appropriate function")
-
-    elements = parse_markdown_unordered_list(block)
-
-    leafs = []
-
-    for elem in elements:
-        leafs.append(LeafNode("li", elem))
     
-    return ParentNode("ul", leafs)
-    """
     if block_to_block_type(block) != MDBlockType.unordered_list:
         raise Exception("Block of type different than 'unordered list' given, change block type or use appropriate function")
 
     md_elements = parse_markdown_unordered_list(block)
 
-    leafs = []
-    html_elements = []
+    parents = []
+    html_elements_full_list = []
 
     for elem in md_elements:
         text_nodes = text_to_textnode(elem)
+        html_elements_single_line = []
+
         for node in text_nodes:
-            html_elements.append(text_node_to_html_node(node))
+            html_elements_single_line.append(text_node_to_html_node(node))
 
-    for elem in html_elements:
-        leafs.append(LeafNode("li", elem))
-    
-    return ParentNode("ul", leafs)
-    """
-    
+        html_elements_full_list.append(html_elements_single_line)
 
+    for elem in html_elements_full_list:
+        parents.append(ParentNode("li", elem))
+    
+    return ParentNode("ul", parents)
+    
+    
 def ordered_list_block_to_html_node(block : str) -> Type[ParentNode]:
 
-    """
     if block_to_block_type(block) != MDBlockType.ordered_list:
         raise Exception("Block of type different than 'ordered list' given, change block type or use appropriate function")
-    
+
     md_elements = parse_markdown_ordered_list(block)
 
-    leafs = []
-    html_elements = []
+    parents = []
+    html_elements_full_list = []
 
     for elem in md_elements:
         text_nodes = text_to_textnode(elem)
+        html_elements_single_line = []
+
         for node in text_nodes:
-            html_elements.append(text_node_to_html_node(node))
+            html_elements_single_line.append(text_node_to_html_node(node))
 
-    for elem in html_elements:
-        leafs.append(LeafNode("li", elem))
-    
-    return ParentNode("ol", leafs)
-    """
-    if block_to_block_type(block) != MDBlockType.ordered_list:
-        raise Exception("Block of type different than 'ordered list' given, change block type or use appropriate function")
-    
-    elements = parse_markdown_ordered_list(block)
+        html_elements_full_list.append(html_elements_single_line)
 
-    leafs = []
-
-    for elem in elements:
-        leafs.append(LeafNode("li", elem))
+    for elem in html_elements_full_list:
+        parents.append(ParentNode("li", elem))
     
-    return ParentNode("ol", leafs)
-
+    return ParentNode("ol", parents)
     
+
 def paragraph_block_to_html_node(block : str) -> Type[ParentNode]:
     
     if block_to_block_type(block) != MDBlockType.paragraph:
@@ -185,16 +181,6 @@ def paragraph_block_to_html_node(block : str) -> Type[ParentNode]:
     return ParentNode("p", leafs)
     
     
-
-    """
-    if block_to_block_type(block) != MDBlockType.paragraph:
-        raise Exception("Block of type different than 'paragraph' given, change block type or use appropriate function")
-    
-    return LeafNode("p", block)
-    """
-    
-    
-
 def get_md_to_html_converter(type : Type[MDBlockType]) -> Callable:
 
     if type == MDBlockType.heading:
