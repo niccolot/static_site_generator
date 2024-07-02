@@ -297,7 +297,7 @@ class TestTextNodeUtils(unittest.TestCase):
         self.assertListEqual(nodes, expected_nodes)
 
 
-    def test_markdown_to_block(self):
+    def test_markdown_to_blocks(self):
 
         with open("test_md1.txt") as file:
             markdown = file.read()

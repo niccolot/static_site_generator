@@ -164,7 +164,7 @@ class TestHTMLNodeUtils(unittest.TestCase):
         self.assertEqual("<p>a</p>", paragraph_node.to_html())
 
     
-    def test_markdownt_to_html_node(self):
+    def test_markdown_to_html_node(self):
         
         with open("test_md2.txt") as file:
             markdown = file.read()
