@@ -2,8 +2,8 @@ from typing import Type
 import re
 import warnings 
 
-from htmlnode import LeafNode
-from textnode import TextNodeType, TextNode, MDBlockType
+from site_generator.htmlnode import LeafNode
+from site_generator.textnode import TextNodeType, TextNode, MDBlockType
 
 
 def text_node_to_html_node(text_node : Type[TextNode]) -> Type[LeafNode]:

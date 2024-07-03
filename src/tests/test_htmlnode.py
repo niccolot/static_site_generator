@@ -1,7 +1,9 @@
 import unittest
+import os
 
-from htmlnode import HTMLNode, LeafNode, ParentNode
-import htmlnode_utils
+from site_generator.htmlnode import HTMLNode, LeafNode, ParentNode
+from site_generator import htmlnode_utils
+
 
 class TestHTMLNode(unittest.TestCase):
     def test_to_html(self):
@@ -165,8 +167,10 @@ class TestHTMLNodeUtils(unittest.TestCase):
 
     
     def test_markdown_to_html_node(self):
+
+        asset_path = os.path.join(os.path.dirname(__file__), 'assets', 'test_md2.txt')
         
-        with open("test_md2.txt") as file:
+        with open(asset_path) as file:
             markdown = file.read()
 
         html_node = htmlnode_utils.markdown_to_html_node(markdown)

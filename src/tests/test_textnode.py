@@ -1,7 +1,9 @@
 import unittest
+import os
 
-from textnode import TextNode, TextNodeType, MDBlockType
-import textnode_utils
+
+from site_generator.textnode import TextNode, TextNodeType, MDBlockType
+from site_generator import textnode_utils
 
 
 class TestTextNode(unittest.TestCase):
@@ -299,7 +301,9 @@ class TestTextNodeUtils(unittest.TestCase):
 
     def test_markdown_to_blocks(self):
 
-        with open("test_md1.txt") as file:
+        asset_path = os.path.join(os.path.dirname(__file__), 'assets', 'test_md1.txt')
+
+        with open(asset_path) as file:
             markdown = file.read()
         
         list = textnode_utils.markdown_to_blocks(markdown)

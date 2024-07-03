@@ -1,8 +1,8 @@
 from typing import Type, Callable
 import re
 
-from htmlnode import LeafNode, ParentNode
-from textnode_utils import *
+from site_generator.htmlnode import LeafNode, ParentNode
+from site_generator.textnode_utils import *
 
 
 def count_markdown_heading_level(heading: str) -> int:
