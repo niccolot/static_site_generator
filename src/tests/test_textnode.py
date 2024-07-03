@@ -130,31 +130,6 @@ class TestTextNodeUtils(unittest.TestCase):
             _ = textnode_utils.split_nodes_delimiter([single_delimiter_node], "*", TextNodeType.italic)
             self.assertEqual(str(e.exception), "Invalid markdown delimiter syntax: matching * character not found")
 
-
-    def test_extract_markdown_image_link(self):
-
-        text_with_images =  "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and ![another](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/dfsdkjfd.png)"
-        text_with_links = "This is text with a [link](https://www.example.com) and [another](https://www.example.com/another)"
-        text_with_nothing = "This is a text without images or links"
-        image_with_no_contents = "This is a text with an empty image ![image]()"
-        link_with_no_contents = "This is a text with an empty link [link]()"
-        text_with_both =  text_with_images + text_with_links
-
-        images_list = [("image", "https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png"), ("another", "https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/dfsdkjfd.png")]
-        links_list = [("link", "https://www.example.com"), ("another", "https://www.example.com/another")]
-        nothing_list = []
-        no_image_list = [("image", "")]
-        no_link_list = [("link", "")]
-
-        self.assertListEqual(images_list, textnode_utils.extract_markdown_images(text_with_images))
-        self.assertListEqual(links_list, textnode_utils.extract_markdown_links(text_with_links))
-        self.assertListEqual(images_list, textnode_utils.extract_markdown_images(text_with_both))
-        self.assertListEqual(links_list, textnode_utils.extract_markdown_links(text_with_both))
-        self.assertListEqual(nothing_list, textnode_utils.extract_markdown_images(text_with_nothing))
-        self.assertListEqual(nothing_list, textnode_utils.extract_markdown_links(text_with_nothing))
-        self.assertListEqual(no_image_list, textnode_utils.extract_markdown_images(image_with_no_contents))
-        self.assertListEqual(no_link_list, textnode_utils.extract_markdown_links(link_with_no_contents))
-
     
     def test_split_nodes_image(self):
 

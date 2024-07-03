@@ -282,17 +282,6 @@ def split_markdown_imgs_links_with_indices(text : str, img : bool) -> tuple[list
     
     return result, alt_text_indices
 
-        
-
-def extract_markdown_images(text : str) -> list[tuple]:
-    matches = re.findall(r"!\[(.*?)\]\((.*?)\)", text)
-    return matches
-
-
-def extract_markdown_links(text : str) -> list[tuple]:
-    matches = re.findall(r"(?<!\!)\[(.*?)\]\((.*?)\)", text)
-    return matches
-
 
 def text_to_textnode(text : str) -> list[TextNode]:
     
